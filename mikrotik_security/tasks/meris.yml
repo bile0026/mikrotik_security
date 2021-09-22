@@ -1,0 +1,14 @@
+---
+# tasks for meris vulnerability check
+
+- name: Check socks status
+  community.routeros.command:
+    commands:
+      - /ip socks print
+  register: socks_check
+
+- name: Assert socks is disabled
+  assert:
+    that: "socks_check.stdout_lines[0][0] == 'enabled: no'"
+    success_msg: "Congratulations, socks is disabled. This is good!"
+    fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."

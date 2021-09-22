@@ -1,7 +1,0 @@
----
-# collections for ansible_role_default
-
-# collections:
-#   - name: <collection_name>
-#     source: https://galaxy.ansible.com
-#     version: <version>

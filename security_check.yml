@@ -1,0 +1,12 @@
+---
+- name: Perform Mikrotik meris vulnerability check
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+  vars:
+    ansible_network_os: routeros
+    check_type: meris
+  collections:
+    - community.routeros
+  roles:
+    - mikrotik_security
