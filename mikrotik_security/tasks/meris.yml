@@ -7,8 +7,20 @@
       - /ip socks print
   register: socks_check
 
-- name: Assert socks is disabled
-  assert:
-    that: "socks_check.stdout_lines[0][0] == 'enabled: no'"
-    success_msg: "Congratulations, socks is disabled. This is good!"
-    fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."
+- name: Check for Mikrotik.php file
+  community.routeros.command:
+    commands:
+      #- "/file [ find where name~\".*[Mm]ikrotik\\.php.*\" ]"
+      - /file find where name=mikrotik.php
+  register: file_check
+
+- debug: var=file_check.stdout_lines
+
+- name: Include remediation tasks if requested
+  include_tasks: "{{ check_type }}_remediation.yml"
+  when:
+    - remediate
+    - "socks_check.stdout_lines[0][0] == 'enabled: yes'"
+
+- name: Include Assertion tasks to verify results
+  include_tasks: "{{ check_type }}_assertions.yml"

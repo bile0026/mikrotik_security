@@ -1,0 +1,19 @@
+---
+# tasks for meris vulneratiblity assertions
+
+- name: Re-Check socks status
+  community.routeros.command:
+    commands:
+      - /ip socks print
+  register: socks_recheck
+
+# - set_fact:
+#     regex: "{{ socks_recheck.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1', multiline=True) }}"
+
+# - debug: var=regex
+
+- name: Assert socks is disabled
+  assert:
+    that: "'no' in {{ (socks_recheck.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1')) }}"
+    success_msg: "Congratulations, socks is disabled. This is good!"
+    fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."

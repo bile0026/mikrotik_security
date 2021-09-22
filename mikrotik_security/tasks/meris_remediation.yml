@@ -1,0 +1,9 @@
+---
+# tasks for meris vulnerability remediation
+
+- name: Disable socks and set port to 1080
+  community.routeros.command:
+    commands:
+      - /ip socks set enabled=no
+      - /ip socks set port=1080
+  register: socks_remediation
