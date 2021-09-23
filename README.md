@@ -1,5 +1,4 @@
 # mikrotik_security
-default structure for ansible
 
 This Ansible role checks MikroTik devices for security vulnerabilities.
 
