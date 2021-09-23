@@ -37,6 +37,15 @@
         } else={ :put "notfound breach schedule"}
   register: schedule_recheck
 
+- name: Check for unauthorized users
+  community.routeros.command:
+    commands:
+      - >
+        :if ([:len [/user find name~".*service.*"]] >= 1) do={
+          :put "possible breach user"
+        } else={ :put "notfound breach user"}
+  register: user_recheck
+
 # - set_fact:
 #     regex: "{{ file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1') }}"
 
@@ -68,4 +77,11 @@
     that: "'possible breach schedule' not in {{ (schedule_recheck.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"
     success_msg: "Congratulations, No mikrotik.php schedule found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php schedule found, if you have not done this on purpose your system may be compromised."
+  ignore_errors: true
+
+- name: Assert no unauthorized users are found
+  assert:
+    that: "'possible breach user' not in {{ (user_recheck.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
+    success_msg: "Congratulations, No unauthorized users found. This is good! (only checks for users with name like *service*)"
+    fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true

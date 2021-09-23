@@ -37,6 +37,15 @@
         } else={ :put "notfound breach schedule"}
   register: schedule_check
 
+- name: Check for unauthorized users
+  community.routeros.command:
+    commands:
+      - >
+        :if ([:len [/user find name~".*service.*"]] >= 1) do={
+          :put "possible breach user"
+        } else={ :put "notfound breach user"}
+  register: user_check
+
 # - set_fact:
 #     regex: "{{ file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1') }}"
 
