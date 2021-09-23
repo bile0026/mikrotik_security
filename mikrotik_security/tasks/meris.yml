@@ -19,13 +19,18 @@
         } else={ :put "notfound breach file"}
   register: file_check
 
-- debug: var=file_check
+# - set_fact:
+#     regex: "{{ file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1') }}"
+
+# - debug: var=regex
+
+#- debug: var=file_check.stdout[0]
 
 - name: Include remediation tasks if requested
   include_tasks: "{{ check_type }}_remediation.yml"
   when:
     - remediate
-    - "socks_check.stdout_lines[0][0] == 'enabled: yes'"
+    - "'ye' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1'))}} or 'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}}"
 
 - name: Include Assertion tasks to verify results
   include_tasks: "{{ check_type }}_assertions.yml"

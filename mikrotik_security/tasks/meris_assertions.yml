@@ -19,10 +19,10 @@
         } else={ :put "notfound breach file"}
   register: file_recheck
 
-- set_fact:
-    regex: "{{ file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1') }}"
+# - set_fact:
+#     regex: "{{ file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1') }}"
 
-- debug: var=regex
+# - debug: var=regex
 
 - name: Assert socks is disabled
   assert:

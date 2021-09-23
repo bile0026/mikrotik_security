@@ -7,3 +7,14 @@
       - /ip socks set enabled=no
       - /ip socks set port=1080
   register: socks_remediation
+  when: "'ye' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1'))}}"
+
+- name: Remove Mikrotik.php files
+  community.routeros.command:
+    commands:
+      - >
+        :foreach i in=[/file find name~".*[Mm]ikrotik\\.php.*"] do={
+          /file remove $i
+        }
+  register: file_remediation
+  when: "'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}}"
