@@ -11,10 +11,13 @@ This Ansible role checks MikroTik devices for security vulnerabilities.
 ## How to use
 Set the variable for the check you want to perform, and whether you want to perform remediations. I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have.
 
+The `check_type` variable is a list. This way multiple security checks can be run in one run as they are added to the list of supported checks.
+
 * FYI, the user check looks for usernames that contain the string "service". If you use that in actual service account names, *DO NOT* run the remediation tasks as that will also remove your legitimate service accounts.
 
 ```
-check_type: meris
+check_type:
+  - meris
 remediate: true/false
 ```
 
