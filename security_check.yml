@@ -7,7 +7,12 @@
     ansible_network_os: routeros
     remediate: false
     check_type:
-      - meris
+      - unauth_users
+    authorized_users:
+      - zbiles
+      - lvcloud
+      - ansible
+    tmp_users: []
   collections:
     - community.routeros
   roles:
