@@ -12,7 +12,7 @@ This Ansible role checks MikroTik devices for security vulnerabilities. Multiple
 ## How to use - Meris check
 Set the variable for the check you want to perform, and whether you want to perform remediations.
 
-!!! Tip "DANGER!"
+**DANGER!**
   I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have. This script has the possibility to delete user accounts or scripts that could be legitimate. Please understand what this playbook does before running remediation.
 
 The `check_type` variable is a list. This way multiple security checks can be run in one run as they are added to the list of supported checks.
@@ -30,7 +30,7 @@ Once run is complete. The assert tasks at the end will give you information on e
 ## How to use - Unauth_users check
 Set the variable for `check_type` to `unuauth_users`. Also, provide a list of known usernames that should be present. This is the list that will be compared to what's actually on the device. I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have.
 
-!!! Tip "DANGER!"
+**DANGER!**
     If running with `remediation: true`, this playbook has the possibility of deleting a user account if it's not specified in the `authorized_users` list. Please be extra sure this list is accurate and complete before running remediation.
 
 * Note, this will currently only work with usernames that contain only letters and numbers. It will not work correctly if there are special characters in usernames.
