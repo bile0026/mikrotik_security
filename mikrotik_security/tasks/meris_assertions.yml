@@ -10,9 +10,6 @@
 - name: Re-Check for Mikrotik.php file
   community.routeros.command:
     commands:
-      #- ":if ([:len [/file find name~'.*[Mm]ikrotik\\.php.*']] >= 1) do={:put 'found'}"
-      #- /file [ where name~".*[Mm]ikrotik\.php.*" ]
-      #- /file find where name=mikrotik.php
       - >
         :if ([:len [/file find name~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach file"
