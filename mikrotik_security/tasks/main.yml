@@ -1,5 +1,10 @@
 ---
 # tasks file for mikrotik_security
 
-- name: Include tasks for {{ check_type }} security checks
-  include_tasks: "{{ check_type }}.yml"
+- debug:
+    msg: "Will include tasks for {{ item }} security checks"
+  loop: "{{ check_type }}"
+
+- name: Include tasks for security checks
+  include_tasks: "{{ item }}.yml"
+  loop: "{{ check_type }}"

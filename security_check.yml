@@ -6,7 +6,8 @@
   vars:
     ansible_network_os: routeros
     remediate: false
-    check_type: meris
+    check_type:
+      - meris
   collections:
     - community.routeros
   roles:
