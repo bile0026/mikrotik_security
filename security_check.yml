@@ -9,10 +9,10 @@
     check_type:
       - unauth_users
     authorized_users:
-      - zbiles
-      - lvcloud
+      - test
       - ansible
     tmp_users: []
+    new_tmp_users: []
   collections:
     - community.routeros
   roles:
