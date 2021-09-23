@@ -1,7 +1,7 @@
 ---
 # tasks for checking unauthorized users
 
-- name: Unauth_users - Check for unauthorized users
+- name: Unauth_users - Get list of users
   community.routeros.command:
     commands:
       - /user print
