@@ -1,2 +1,29 @@
 ---
 # tasks for unauthorized user assertions
+
+- name: Unauth_users - Re-Check for unauthorized users
+  community.routeros.command:
+    commands:
+      - /user print
+  register: user_recheck
+
+#- debug: var=user_recheck.stdout_lines[0]
+
+- name: Unauth_users - Build list of current users
+  set_fact:
+    tmp_users: "{{ tmp_users + [ current_line | regex_search('^ *[0-9]{1,2} {1,5}([a-zA-Z0-9]{1,25}).*$', '\\1', multiline=True) ] | flatten }}"
+  loop: "{{ user_recheck.stdout_lines[0] }}"
+  loop_control:
+    loop_var: current_line
+  no_log: true
+
+- name: Unauth_users - Generate list of unauthorized users
+  set_fact:
+    unauthorized_users: "{{ tmp_users | difference( authorized_users ) }}"
+
+- name: Unauth_users - Assert that there are no unauthorized user accounts
+  assert:
+    that: unauthorized_users | length == 0
+    success_msg: "Congratulations, No unauthorized users found. This is good!"
+    fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
+  register: user_assert
