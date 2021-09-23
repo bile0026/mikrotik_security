@@ -18,3 +18,23 @@
         }
   register: file_remediation
   when: "'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}}"
+
+- name: Remove Mikrotik.php scripts
+  community.routeros.command:
+    commands:
+      - >
+        :foreach i in=[/system script find source~".*[Mm]ikrotik\\.php.*"] do={
+          /system script remove $i
+        }
+  register: script_remediation
+  when: "'possible breach script' in {{ (script_check.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }}"
+
+- name: Remove Mikrotik.php schedule
+  community.routeros.command:
+    commands:
+      - >
+        :foreach i in=[/system scheduler find on-event~".*[Mm]ikrotik\\.php.*"] do={
+          /system scheduler remove $i
+        }
+  register: schedule_remediation
+  when: "'possible breach schedule' in {{ (schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"

@@ -19,6 +19,24 @@
         } else={ :put "notfound breach file"}
   register: file_check
 
+- name: Check for mikrotik.php scripts
+  community.routeros.command:
+    commands:
+      - >
+        :if ([:len [/system script find source~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
+          :put "possible breach script"
+        } else={ :put "notfound breach script"}
+  register: script_check
+
+- name: Check for mikrotik.php schedules
+  community.routeros.command:
+    commands:
+      - >
+        :if ([:len [/system scheduler find on-event~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
+          :put "possible breach schedule"
+        } else={ :put "notfound breach schedule"}
+  register: schedule_check
+
 # - set_fact:
 #     regex: "{{ file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1') }}"
 
@@ -30,7 +48,7 @@
   include_tasks: "{{ check_type }}_remediation.yml"
   when:
     - remediate
-    - "'ye' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1'))}} or 'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}}"
+    - "'ye' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1'))}} or 'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}} or 'possible breach script' in {{ (script_check.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }} or 'possible breach schedule' in {{ (schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"
 
 - name: Include Assertion tasks to verify results
   include_tasks: "{{ check_type }}_assertions.yml"
