@@ -48,7 +48,7 @@
 
 - name: Assert socks is disabled
   assert:
-    that: "'no' in {{ (socks_recheck.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1')) }}"
+    that: "'no' in {{ (socks_recheck.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1')) }}"
     success_msg: "Congratulations, socks is disabled. This is good!"
     fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
@@ -89,11 +89,11 @@
 - name: Assert all conditions
   assert:
     that:
-      - socks_assert
-      - file_assert
-      - script_assert
-      - schedule_assert
-      - user_assert
+      - socks_assert is not failed
+      - file_assert is not failed
+      - script_assert is not failed
+      - schedule_assert is not failed
+      - user_assert is not failed
     success_msg: "Congratulations, {{ ansible_host }} does not seem to be compromised. It still may be a good idea to change passwords."
     fail_msg: "***DANGER*** possible compromise found on {{ ansible_host }}. Please check logs and consider running in remediation mode."
   ignore_errors: true
