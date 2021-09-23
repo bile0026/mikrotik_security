@@ -38,3 +38,13 @@
         }
   register: schedule_remediation
   when: "'possible breach schedule' in {{ (schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"
+
+- name: Remove unauthorized users
+  community.routeros.command:
+    commands:
+      - >
+        :foreach i in=[/user find name~".*service.*"] do={
+          /user remove $i
+        }
+  register: user_remediation
+  when: "'possible breach user' in {{ (user_check.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
