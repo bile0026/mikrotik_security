@@ -2,6 +2,9 @@
 
 This Ansible role checks MikroTik devices for security vulnerabilities.
 
+## Pre-tasks
+1. Install the routeros collection using `ansible-galaxy collection install -r mikrotik_security/collections/requirements.yml`
+
 ## Currently supported checks
 1. meris vulnerability
 
