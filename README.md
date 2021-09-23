@@ -6,7 +6,7 @@ This Ansible role checks MikroTik devices for security vulnerabilities.
 1. Install the routeros collection using `ansible-galaxy collection install -r mikrotik_security/collections/requirements.yml`
 
 ## Currently supported checks
-1. meris vulnerability
+1. meris vulnerability - checks for indicators of compromise, such as unauthorized users, scripts/files/schedules that are suspected to be leveraged in this attack.
 
 ## How to use
 Set the variable for the check you want to perform, and whether you want to perform remediations. I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have.
