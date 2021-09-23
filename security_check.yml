@@ -7,7 +7,7 @@
     ansible_network_os: routeros
     remediate: false
     check_type:
-      - unauth_users
+      - meris
     authorized_users:
       - test
       - ansible
