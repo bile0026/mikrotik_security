@@ -27,3 +27,4 @@
     success_msg: "Congratulations, No unauthorized users found. This is good!"
     fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
   register: user_assert
+  ignore_errors: true
