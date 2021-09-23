@@ -18,6 +18,8 @@ check_type: meris
 remediate: true/false
 ```
 
+Once run is complete. The assert tasks at the end will give you information on each individual check, plus a summary at the end. Check these messages for information on your environment.
+
 ## Additional Notes
 * You should also change usernames and passwords of legitimate accounts on your devices as well as good practice, especially if there were issues found. Do this *after* running remediation!
 * Check your `firewall` and `/ip service` settings to make sure you have proper input chain rules to prevent connections from unauthorized IPs. Disable any services not required, and consider changing default ports or adding source IP access lists to services you do need.
