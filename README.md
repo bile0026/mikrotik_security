@@ -9,7 +9,7 @@ This Ansible role checks MikroTik devices for security vulnerabilities. Multiple
 1. meris vulnerability - checks for indicators of compromise, such as unauthorized users, scripts/files/schedules that are suspected to be leveraged in this attack.
 2. Unauthorized users - checks for user accounts that are not supposed to be on the device compared with a list of known good usernames.
 
-## How to use - Meris check
+# How to use - Meris check
 Set the variable for the check you want to perform, and whether you want to perform remediations.
 
 > **DANGER!**
@@ -27,7 +27,7 @@ remediate: true/false
 
 Once run is complete. The assert tasks at the end will give you information on each individual check, plus a summary at the end. Check these messages for information on your environment.
 
-## How to use - Unauth_users check
+# How to use - Unauth_users check
 Set the variable for `check_type` to `unuauth_users`. Also, provide a list of known usernames that should be present. This is the list that will be compared to what's actually on the device. I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have.
 
 > **DANGER!**
