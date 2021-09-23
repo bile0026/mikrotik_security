@@ -5,7 +5,7 @@
   connection: network_cli
   vars:
     ansible_network_os: routeros
-    remediate: true
+    remediate: false
     check_type: meris
   collections:
     - community.routeros

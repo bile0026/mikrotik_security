@@ -10,11 +10,16 @@
 - name: Check for Mikrotik.php file
   community.routeros.command:
     commands:
-      #- "/file [ find where name~\".*[Mm]ikrotik\\.php.*\" ]"
-      - /file find where name=mikrotik.php
+      #- ":if ([:len [/file find name~'.*[Mm]ikrotik\\.php.*']] >= 1) do={:put 'found'}"
+      #- /file [ where name~".*[Mm]ikrotik\.php.*" ]
+      #- /file find where name=mikrotik.php
+      - >
+        :if ([:len [/file find name~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
+          :put "possible breach file"
+        } else={ :put "notfound breach file"}
   register: file_check
 
-- debug: var=file_check.stdout_lines
+- debug: var=file_check
 
 - name: Include remediation tasks if requested
   include_tasks: "{{ check_type }}_remediation.yml"
