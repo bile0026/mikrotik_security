@@ -8,6 +8,11 @@
     remediate: false
     check_type:
       - meris
+    authorized_users:
+      - test
+      - ansible
+    tmp_users: []
+    new_tmp_users: []
   collections:
     - community.routeros
   roles:

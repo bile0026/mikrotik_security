@@ -1,0 +1,14 @@
+---
+# tasks for remediating unauthorized users
+
+- name: Unauth_users - Remove unauthorized users
+  community.routeros.command:
+    commands:
+      - >
+        :foreach i in=[/user find name~"{{ user }}"] do={
+          /user remove $i
+        }
+  register: user_remediation
+  loop: "{{ unauthorized_users }}"
+  loop_control:
+    loop_var: user
