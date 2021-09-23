@@ -46,17 +46,13 @@
         } else={ :put "notfound breach user"}
   register: user_recheck
 
-# - set_fact:
-#     regex: "{{ file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1') }}"
-
-# - debug: var=regex
-
 - name: Assert socks is disabled
   assert:
     that: "'no' in {{ (socks_recheck.stdout[0]  | regex_search('enabled: ([a-z].)', '\\1')) }}"
     success_msg: "Congratulations, socks is disabled. This is good!"
     fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
+  register: socks_assert
 
 - name: Assert no mikrotik.php file found on device
   assert:
@@ -64,6 +60,7 @@
     success_msg: "Congratulations, No mikrotik.php file found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php file found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
+  register: file_assert
 
 - name: Assert no mikrotik.php script is found
   assert:
@@ -71,6 +68,7 @@
     success_msg: "Congratulations, No mikrotik.php script found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php script found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
+  register: script_assert
 
 - name: Assert no mikrotik.php schedule is found
   assert:
@@ -78,6 +76,7 @@
     success_msg: "Congratulations, No mikrotik.php schedule found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php schedule found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
+  register: schedule_assert
 
 - name: Assert no unauthorized users are found
   assert:
@@ -85,3 +84,17 @@
     success_msg: "Congratulations, No unauthorized users found. This is good! (only checks for users with name like *service*)"
     fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
+  register: user_assert
+
+- name: Assert all conditions
+  assert:
+    that:
+      - socks_assert
+      - file_assert
+      - script_assert
+      - schedule_assert
+      - user_assert
+    success_msg: "Congratulations, {{ ansible_host }} does not seem to be compromised. It still may be a good idea to change passwords."
+    fail_msg: "***DANGER*** possible compromise found on {{ ansible_host }}. Please check logs and consider running in remediation mode."
+  ignore_errors: true
+  register: full_assert
