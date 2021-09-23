@@ -7,7 +7,7 @@
       - /ip socks set enabled=no
       - /ip socks set port=1080
   register: socks_remediation
-  when: "'ye' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1'))}}"
+  when: "'yes' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1'))}}"
 
 - name: Meris - Remove Mikrotik.php files
   community.routeros.command:
