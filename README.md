@@ -10,6 +10,9 @@ This Ansible role checks MikroTik devices for security vulnerabilities. Multiple
 2. Unauthorized users - checks for user accounts that are not supposed to be on the device compared with a list of known good usernames.
 
 # How to use - Meris check
+
+> inspired by: https://unimus.net/blog/validating-security-of-mikrotik-routers-network-wide.html
+
 Set the variable for the check you want to perform, and whether you want to perform remediations.
 
 > **DANGER!**
