@@ -15,9 +15,7 @@
   loop: "{{ user_check.stdout_lines[0] }}"
   loop_control:
     loop_var: current_line
-
-- debug: var=tmp_users
-- debug: var=authorized_users
+  no_log: true
 
 - name: Unauth_users - Generate list of unauthorized users
   set_fact:
@@ -27,7 +25,7 @@
   include_tasks: "unauth_users_remediation.yml"
   when:
     - remediate
-    - unauthorized_users != ''
+    - unauthorized_users | length > 0
 
 - name: Unauth_users - Include Assertion tasks to verify results
   include_tasks: "unauth_users_assertions.yml"
