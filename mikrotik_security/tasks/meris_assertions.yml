@@ -94,4 +94,4 @@
     success_msg: "Congratulations, {{ ansible_host }} does not seem to be compromised. It still may be a good idea to change passwords."
     fail_msg: "***DANGER*** possible compromise found on {{ ansible_host }}. Please check logs and consider running in remediation mode."
   ignore_errors: true
-  register: full_assert
+  register: meris_full_assert
