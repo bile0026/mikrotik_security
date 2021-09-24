@@ -4,7 +4,7 @@
 - name: Generate report
   template:
     src: templates/email_report.j2
-    dst: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
+    dest: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
   delegate_to: localhost
   run_once: true
 
