@@ -34,7 +34,7 @@ Once run is complete. The assert tasks at the end will give you information on e
 Set the variable for `check_type` to `unuauth_users`. Also, provide a list of known usernames that should be present. This is the list that will be compared to what's actually on the device. I would highly reccomend running without remediation first to see what possibly vulnerabilities you might have.
 
 > **DANGER!**
-    If running with `remediation: true`, this playbook has the possibility of deleting a user account if it's not specified in the `authorized_users` list. Please be extra sure this list is accurate and complete before running remediation.
+    If running with `remediation: true`, this playbook has the possibility of deleting a user account if it's not specified in the `authorized_users` list. Please be extra sure this list is accurate and complete before running remediation. Note, usernames are case-sensitive.
 
 * Note, this will currently only work with usernames that contain only letters and numbers. It will not work correctly if there are special characters in usernames.
 
