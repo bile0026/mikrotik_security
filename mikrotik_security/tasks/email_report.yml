@@ -1,0 +1,23 @@
+---
+# tasks for emailing reports
+
+- name: Generate report
+  template:
+    src: templates/email_report.j2
+    dest: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
+  delegate_to: localhost
+  run_once: true
+
+- name: Email report
+  mail:
+    from: "{{ from_email }}"
+    to: "{{ email_addresses }}"
+    port: "{{ smtp_port }}"
+    subject: Security report for {{ lookup('pipe','date +%Y-%m-%d') }}
+    subtype: html
+    host: "{{ smtp_server }}"
+    attach: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - smtp_server is defined

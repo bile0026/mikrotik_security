@@ -5,14 +5,12 @@
   community.routeros.command:
     commands:
       - /user print
-  register: user_recheck
-
-#- debug: var=user_recheck.stdout_lines[0]
+  register: unauth_user_recheck
 
 - name: Unauth_users - Build list of current users
   set_fact:
     new_tmp_users: "{{ new_tmp_users + [ current_line | regex_search('^ *[0-9]{1,2} {1,5}([a-zA-Z0-9]{1,25}).*$', '\\1', multiline=True) ] | flatten }}"
-  loop: "{{ user_recheck.stdout_lines[0] }}"
+  loop: "{{ unauth_user_recheck.stdout_lines[0] }}"
   loop_control:
     loop_var: current_line
   no_log: true
@@ -26,5 +24,5 @@
     that: new_unauthorized_users | length == 0
     success_msg: "Congratulations, No unauthorized users found. This is good!"
     fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
-  register: user_assert
+  register: unauth_users_assert
   ignore_errors: true
