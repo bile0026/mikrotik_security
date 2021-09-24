@@ -1,2 +1,18 @@
 ---
 # defaults file for mikrotik_security
+
+remediate: false
+check_type:
+  - meris
+authorized_users:
+  - test
+  - ansible
+tmp_users: []
+new_tmp_users: []
+
+# email report vars
+smtp_server: mail.smtp2go.com
+smtp_port: 2525
+email_addresses:
+  - zacharybiles@gmail.com
+from_email: awx@sisulink.com
