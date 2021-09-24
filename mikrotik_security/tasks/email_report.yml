@@ -13,10 +13,10 @@
     from: "{{ from_email }}"
     to: "{{ email_addresses }}"
     port: "{{ smtp_port }}"
-    subject: MikroTik Security report for {{ lookup('pipe','date +%Y-%m-%d') }}
+    subject: MikroTik Security report for {{ location }} {{ lookup('pipe','date +%Y-%m-%d') }}
     subtype: html
     host: "{{ smtp_server }}"
-    attach: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
+    attach: "Mikrotik_Security Report {{ location }} {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
   delegate_to: localhost
   run_once: true
   when:
