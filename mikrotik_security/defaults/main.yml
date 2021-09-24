@@ -12,7 +12,7 @@ tmp_users: []
 new_tmp_users: []
 
 # email report vars
-generate_report: true
+generate_report: false
 #smtp_server: smtp.example.com
 smtp_port: 2525
 email_addresses:
