@@ -56,7 +56,7 @@ If you wish to have a report emailed to you, include the variables for the email
 * At this point, it will always email, even if no vulnerabilities were found. My plan is to eventually add logic so that an email is only sent if there is a compromise found.
 
 ```
-email_report: true
+generate_report: true
 smtp_server: <smtp_server>
 port: <smrtp_port>
 email_addresses:
