@@ -8,7 +8,7 @@
   delegate_to: localhost
   run_once: true
 
-- name: email diffs
+- name: Email report
   mail:
     from: "{{ from_email }}"
     to: "{{ email_addresses }}"
@@ -18,3 +18,6 @@
     host: "{{ smtp_server }}"
     attach: "Mikrotik_Security Report {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
   delegate_to: localhost
+  run_once: true
+  when:
+    - smtp_server is defined
