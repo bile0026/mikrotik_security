@@ -5,7 +5,7 @@
   community.routeros.command:
     commands:
       - >
-        :foreach i in=[/user find name~"{{ user }}"] do={
+        :foreach i in=[/user find name="{{ user }}"] do={
           /user remove $i
         }
   register: user_remediation
