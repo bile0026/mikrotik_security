@@ -8,3 +8,7 @@
 - name: Include tasks for security checks
   include_tasks: "{{ item }}.yml"
   loop: "{{ check_type }}"
+
+- name: Email Report
+  include_tasks: email_report.yml
+  when: email_report
