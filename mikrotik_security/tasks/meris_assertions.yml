@@ -86,11 +86,11 @@
 - name: Meris - Assert all conditions
   assert:
     that:
-      - socks_assert is not failed
-      - file_assert is not failed
-      - script_assert is not failed
-      - schedule_assert is not failed
-      - user_assert is not failed
+      - meris_socks_assert is not failed
+      - meris_file_assert is not failed
+      - meris_script_assert is not failed
+      - meris_schedule_assert is not failed
+      - meris_user_assert is not failed
     success_msg: "Congratulations, {{ ansible_host }} does not seem to be compromised. It still may be a good idea to change passwords."
     fail_msg: "***DANGER*** possible compromise found on {{ ansible_host }}. Please check logs and consider running in remediation mode."
   ignore_errors: true
