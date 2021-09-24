@@ -1,4 +1,72 @@
+Please see below for possible security issues
+==============================================================================
 {% for host in play_hosts %}
+{% set found_vulneratbilities = 0 %}
+{{ host }}
+{% if hostvars[host]['meris_full_assert'] is defined %}
+{% if hostvars[host]['meris_full_assert'].failed %}
+  Meris check results:
+{% set found_vulneratbilities = found_vulneratbilities + 1 %}
+{% if hostvars[host]['meris_socks_assert'].failed %}
+    - Socks Check: **DANGER** Socks appears to be enabled, is this by design?
+{% else %}
+    - Socks Check: Socks is disabled, this is good!
+{# meris socks check failed #}
+{% endif %}
+{% if hostvars[host]['meris_file_assert'].failed %}
+    - File Check: **DANGER** Suspicious files found.
+{% else %}
+    - File Check: No suspicious files found, this is good!
+{# meris file assert failed #}
+{% endif %}
+{% if hostvars[host]['meris_script_assert'].failed %}
+    - Script Check: **DANGER** Suspicious Scripts found.
+{% else %}
+    - Script Check: No suspicious Scripts found, this is good!
+{# meris script assert failed #}
+{% endif %}
+{% if hostvars[host]['meris_schedule_assert'].failed %}
+    - Schedule Check: **DANGER** Suspicious schedules found.
+{% else %}
+    - Schedule Check: No suspicious schedules found, this is good!
+{# meris schedule assert failed #}
+{% endif %}
+{% if hostvars[host]['meris_user_assert'].failed %}
+    - User Check: **DANGER** Suspicious users found.
+{% else %}
+    - User Check: No suspicious users found, this is good!
 
+{# meris user assert failed #}
+{% endif %}
 
+{# meris full assert failed #}
+{% endif %}
+{# meris full assert is defined #}
+{% endif %}
+{% if hostvars[host]['unauth_users_assert'] is defined %}
+{% if hostvars[host]['unauth_users_assert'].failed %}
+  Unauthorized user accounts found:
+{% set found_vulneratbilities = found_vulneratbilities + 1 %}
+{% if hostvars[host]['unauthorized_users'] | length > 0 %}
+{% for username in hostvars[host]['unauthorized_users'] %}
+    - {{ username }}
+{# unauthorized_users loop #}
+{% endfor %}
+{% else %}
+    No unauthorized users found, this is good!
+{# unauthorized users length > 0 #}
+{% endif %}
+{# unauthorized users assert failed #}
+{% endif %}
+{# unauth users assert is defined #}
+{% endif %}
+
+{# no security checks failed any assertions #}
+{% if found_vulneratbilities == 0 %}
+  No security issues found!
+
+{# no vulnerabilities were found #}
+{% endif %}
+==============================================================================
+{# play_hosts loop #}
 {% endfor %}
