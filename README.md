@@ -50,6 +50,19 @@ authorzied_users:
 
 Once run is complete the assert tasks at the end will provide information on whether unauthorized user accounts were found on devices.
 
+# Reports
+If you wish to have a report emailed to you, include the variables for the email task. This will email a txt file with a printout of the results of your checks.
+
+```
+email_report: true
+smtp_server: <smtp_server>
+port: <smrtp_port>
+email_addresses:
+  - name@example.com
+  - name2@example.com
+from_email: email@example.com
+```
+
 ## Additional Notes
 * You should also change usernames and passwords of legitimate accounts on your devices as well as good practice, especially if there were issues found. Do this *AFTER* running remediation!
 * Check your `firewall` and `/ip service` settings to make sure you have proper input chain rules to prevent connections from unauthorized IPs. Disable any services not required, and consider changing default ports or adding source IP access lists to services you do need.
