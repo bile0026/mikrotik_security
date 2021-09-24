@@ -4,8 +4,8 @@ Please see below for possible security issues
 {% set found_vulneratbilities = 0 %}
 {{ host }}
 {% if hostvars[host]['meris_full_assert'] is defined %}
-{% if hostvars[host]['meris_full_assert'].failed %}
   Meris check results:
+{% if hostvars[host]['meris_full_assert'].failed %}
 {% set found_vulneratbilities = found_vulneratbilities + 1 %}
 {% if hostvars[host]['meris_socks_assert'].failed %}
     - Socks Check: **DANGER** Socks appears to be enabled, is this by design?
@@ -38,6 +38,10 @@ Please see below for possible security issues
 
 {# meris user assert failed #}
 {% endif %}
+
+{# meris full assert was successful #}
+{% else %}
+    - No indicators of meris vulnerability found, this is good!
 
 {# meris full assert failed #}
 {% endif %}
