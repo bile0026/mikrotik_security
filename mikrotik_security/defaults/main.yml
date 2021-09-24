@@ -3,6 +3,7 @@
 
 remediate: false
 check_type:
+  - meris
   - unauth_users
 authorized_users:
   - test
