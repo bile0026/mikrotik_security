@@ -11,4 +11,6 @@
 
 - name: Email Report
   include_tasks: email_report.yml
-  when: email_report
+  when:
+    - email_report
+    - meris_full_assert is failed or unuath_users_assert is failed
