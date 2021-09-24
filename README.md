@@ -36,7 +36,7 @@ Set the variable for `check_type` to `unuauth_users`. Also, provide a list of kn
 > **DANGER!**
     If running with `remediation: true`, this playbook has the possibility of deleting a user account if it's not specified in the `authorized_users` list. Please be extra sure this list is accurate and complete before running remediation. Note, usernames are case-sensitive.
 
-* Note, this will currently only work with usernames that contain only letters and numbers. It will not work correctly if there are special characters in usernames.
+* Note, this will currently only work with usernames that contain letters, numbers, and these special characters `-_@+*.`. If you'd like more added, please open an issue/PR.
 
 ```
 check_type:

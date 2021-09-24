@@ -8,6 +8,7 @@ check_type:
 authorized_users:
   - test
   - ansible
+  - test-ansible
 tmp_users: []
 new_tmp_users: []
 
