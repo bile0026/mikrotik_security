@@ -14,6 +14,7 @@ new_tmp_users: []
 
 # email report vars
 generate_report: false
+location: Ansible
 #smtp_server: smtp.example.com
 smtp_port: 2525
 email_addresses:
