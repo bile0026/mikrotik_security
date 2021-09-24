@@ -53,6 +53,8 @@ Once run is complete the assert tasks at the end will provide information on whe
 # Reports
 If you wish to have a report emailed to you, include the variables for the email task. This will email a txt file with a printout of the results of your checks.
 
+* At this point, it will always email, even if no vulnerabilities were found. My plan is to eventually add logic so that an email is only sent if there is a compromise found.
+
 ```
 email_report: true
 smtp_server: <smtp_server>
