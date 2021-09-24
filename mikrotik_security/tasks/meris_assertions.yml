@@ -5,7 +5,7 @@
   community.routeros.command:
     commands:
       - /ip socks print
-  register: socks_recheck
+  register: meris_socks_recheck
 
 - name: Meris - Re-Check for Mikrotik.php file
   community.routeros.command:
@@ -14,7 +14,7 @@
         :if ([:len [/file find name~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach file"
         } else={ :put "notfound breach file"}
-  register: file_recheck
+  register: meris_file_recheck
 
 - name: Meris - Re-Check for mikrotik.php scripts
   community.routeros.command:
@@ -23,7 +23,7 @@
         :if ([:len [/system script find source~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach script"
         } else={ :put "notfound breach script"}
-  register: script_recheck
+  register: meris_script_recheck
 
 - name: Meris - Re-Check for mikrotik.php schedules
   community.routeros.command:
@@ -32,7 +32,7 @@
         :if ([:len [/system scheduler find on-event~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach schedule"
         } else={ :put "notfound breach schedule"}
-  register: schedule_recheck
+  register: meris_schedule_recheck
 
 - name: Meris - Check for unauthorized users
   community.routeros.command:
@@ -41,47 +41,47 @@
         :if ([:len [/user find name~".*service.*"]] >= 1) do={
           :put "possible breach user"
         } else={ :put "notfound breach user"}
-  register: user_recheck
+  register: meris_user_recheck
 
 - name: Meris - Assert socks is disabled
   assert:
-    that: "'no' in {{ (socks_recheck.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1')) }}"
+    that: "'no' in {{ (meris_socks_recheck.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1')) }}"
     success_msg: "Congratulations, socks is disabled. This is good!"
     fail_msg: "***DANGER*** socks is enabled, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
-  register: socks_assert
+  register: meris_socks_assert
 
 - name: Meris - Assert no mikrotik.php file found on device
   assert:
-    that: "'possible breach file' not in {{ (file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1')) }}"
+    that: "'possible breach file' not in {{ (meris_file_recheck.stdout[0]  | regex_search('([a-z]{8} breach file)$', '\\1')) }}"
     success_msg: "Congratulations, No mikrotik.php file found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php file found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
-  register: file_assert
+  register: meris_file_assert
 
 - name: Meris - Assert no mikrotik.php script is found
   assert:
-    that: "'possible breach script' not in {{ (script_recheck.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }}"
+    that: "'possible breach script' not in {{ (meris_script_recheck.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }}"
     success_msg: "Congratulations, No mikrotik.php script found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php script found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
-  register: script_assert
+  register: meris_script_assert
 
 - name: Meris - Assert no mikrotik.php schedule is found
   assert:
-    that: "'possible breach schedule' not in {{ (schedule_recheck.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"
+    that: "'possible breach schedule' not in {{ (meris_schedule_recheck.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }}"
     success_msg: "Congratulations, No mikrotik.php schedule found. This is good!"
     fail_msg: "***DANGER*** mikrotik.php schedule found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
-  register: schedule_assert
+  register: meris_schedule_assert
 
 - name: Meris - Assert no unauthorized users are found
   assert:
-    that: "'possible breach user' not in {{ (user_recheck.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
+    that: "'possible breach user' not in {{ (meris_user_recheck.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
     success_msg: "Congratulations, No unauthorized users found. This is good! (only checks for users with name like *service*)"
     fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
   ignore_errors: true
-  register: user_assert
+  register: meris_user_assert
 
 - name: Meris - Assert all conditions
   assert:

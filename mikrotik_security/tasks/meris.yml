@@ -5,7 +5,7 @@
   community.routeros.command:
     commands:
       - /ip socks print
-  register: socks_check
+  register: meris_socks_check
 
 - name: Meris - Check for Mikrotik.php file
   community.routeros.command:
@@ -14,7 +14,7 @@
         :if ([:len [/file find name~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach file"
         } else={ :put "notfound breach file"}
-  register: file_check
+  register: meris_file_check
 
 - name: Meris - Check for mikrotik.php scripts
   community.routeros.command:
@@ -23,7 +23,7 @@
         :if ([:len [/system script find source~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach script"
         } else={ :put "notfound breach script"}
-  register: script_check
+  register: meris_script_check
 
 - name: Meris - Check for mikrotik.php schedules
   community.routeros.command:
@@ -32,7 +32,7 @@
         :if ([:len [/system scheduler find on-event~".*[Mm]ikrotik\\.php.*"]] >= 1) do={
           :put "possible breach schedule"
         } else={ :put "notfound breach schedule"}
-  register: schedule_check
+  register: meris_schedule_check
 
 - name: Meris - Check for unauthorized users
   community.routeros.command:
@@ -41,13 +41,13 @@
         :if ([:len [/user find name~".*service.*"]] >= 1) do={
           :put "possible breach user"
         } else={ :put "notfound breach user"}
-  register: user_check
+  register: meris_user_check
 
 - name: Meris - Include remediation tasks if requested
   include_tasks: "meris_remediation.yml"
   when:
     - remediate
-    - "'yes' in {{(socks_check.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1'))}} or 'possible breach file' in {{(file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}} or 'possible breach script' in {{ (script_check.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }} or 'possible breach schedule' in {{ (schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }} or 'possible breach user' in {{ (user_check.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
+    - "'yes' in {{(meris_socks_check.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1'))}} or 'possible breach file' in {{(meris_file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}} or 'possible breach script' in {{ (meris_script_check.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }} or 'possible breach schedule' in {{ (meris_schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }} or 'possible breach user' in {{ (meris_user_check.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
 
 - name: Meris - Include Assertion tasks to verify results
   include_tasks: "meris_assertions.yml"
