@@ -1,0 +1,41 @@
+---
+# tasks for emailing reports
+
+- name: Generate report
+  template:
+    src: templates/email_report.j2
+    dest: "{{ report_file }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Email report
+  mail:
+    from: "{{ from_email }}"
+    to: "{{ email_addresses }}"
+    port: "{{ smtp_port }}"
+    subject: MikroTik Security report for {{ location }} {{ lookup('pipe','date +%Y-%m-%d') }}
+    subtype: html
+    host: "{{ smtp_server }}"
+    attach: "{{ report_file }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - smtp_server is defined
+
+- name: Slack Report
+  community.general.slack:
+    token: "{{ slack_token }}"
+    channel: "#{{ slack_channel }}"
+    username: "{{ slack_username }}"
+    blocks:
+      - type: section
+        text:
+          type: mrkdwn
+          text: |-
+            MikroTik Security Report *{{ location }}* {{ lookup('pipe','date +%Y-%m-%d') }}
+
+            ```{{ lookup('file', report_file) }}```
+  delegate_to: localhost
+  run_once: true
+  when:
+    - slack_token is defined
