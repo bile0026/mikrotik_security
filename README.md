@@ -54,6 +54,9 @@ authorzied_users:
 Once run is complete the assert tasks at the end will provide information on whether unauthorized user accounts were found on devices.
 
 # Reports
+
+## Email reports
+
 If you wish to have a report emailed to you, include the variables for the email task. This will email a txt file with a printout of the results of your checks.
 
 * At this point, it will always email, even if no vulnerabilities were found. My plan is to eventually add logic so that an email is only sent if there is a compromise found.
@@ -66,6 +69,19 @@ email_addresses:
   - name@example.com
   - name2@example.com
 from_email: email@example.com
+```
+
+## Slack Reports
+* info on setting up slack bot: https://github.com/ansible/awx/issues/6610#issuecomment-613035465
+
+Include the following variables to run slack notifications.
+
+* Note, only public channels seem to work at this time. Will work this out eventually.
+
+```
+slack_token: <generate token>
+slack_channel: welcome
+slack_username: ansible_notifications
 ```
 
 ## Additional Notes
