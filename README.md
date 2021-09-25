@@ -74,7 +74,7 @@ from_email: email@example.com
 ## Slack Reports
 * info on setting up slack bot: https://github.com/ansible/awx/issues/6610#issuecomment-613035465
 
-Include the following variables to run slack notifications.
+Include the following variables to run slack notifications. Currently slack notifications have a character limit of 3000, so this might not be the best method if you have a lot of devices.
 
 * Note, only public channels seem to work at this time. Will work this out eventually.
 
