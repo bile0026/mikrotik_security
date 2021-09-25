@@ -34,7 +34,7 @@
           text: |-
             MikroTik Security Report *{{ location }}* {{ lookup('pipe','date +%Y-%m-%d') }}
 
-            {{ lookup('file', report_file) }}
+            ```{{ lookup('file', report_file) }}```
   delegate_to: localhost
   run_once: true
   when:
