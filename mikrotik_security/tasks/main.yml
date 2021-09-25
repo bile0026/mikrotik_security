@@ -10,7 +10,7 @@
   loop: "{{ check_type }}"
 
 - name: Include tasks for report generation and email
-  include_tasks: email_report.yml
+  include_tasks: generate_report.yml
   when:
     - generate_report
     - meris_full_assert.failed is defined or unauth_users_assert.failed is defined
