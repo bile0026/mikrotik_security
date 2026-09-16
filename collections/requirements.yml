@@ -3,4 +3,6 @@
 
 collections:
   - name: community.routeros
+    version: "2.9.0"
   - name: community.general
+    version: "3.7.0"
