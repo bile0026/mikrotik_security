@@ -1,0 +1,17 @@
+---
+# tasks for gathering evidence of the September 2026 MikroTrick compromise
+# (CVE-2026-67276, CVE-2026-86060, CVE-2026-67277)
+
+- name: MikroTrick - Collect evidence
+  ansible.builtin.include_tasks: collect.yml
+  vars:
+    routeros_collect: >-
+      {{ ['device_mode', 'users', 'user_groups', 'ssh_keys', 'scripts', 'schedulers', 'files',
+          'netwatch', 'ppp_profiles', 'dhcp_clients', 'dhcp_servers', 'ovpn_clients',
+          'ovpn_server', 'pptp_clients', 'pptp_server', 'history']
+         + routeros_security_firewall_collectors
+         + (['logs'] if routeros_security_collect_logs | bool else [])
+         + (['ppp_secrets'] if routeros_security_collect_ppp_secrets | bool else []) }}
+
+- name: MikroTrick - Include assertion tasks to evaluate evidence
+  ansible.builtin.include_tasks: mikrotrick_assertions.yml

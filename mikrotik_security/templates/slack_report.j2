@@ -1,0 +1,21 @@
+{# Slack limits a section to 3000 characters: list every host first, then critical details. #}
+{% for host in ansible_play_hosts_all %}
+{%   set findings = hostvars[host].routeros_security_findings | default(none) %}
+{%   if findings is none %}
+NOT RUN   {{ host }}
+{%   else %}
+{%     set summary = findings | routeros_findings_summary %}
+{{ '%-10s' | format(summary.result) }}{{ host }}{% for level in ['CRITICAL', 'WARNING', 'UNKNOWN'] if summary.counts[level] %}{{ ' - ' if loop.first else ', ' }}{{ summary.counts[level] }} {{ level | lower }}{% endfor %}
+
+{%   endif %}
+{% endfor %}
+{% for host in ansible_play_hosts_all %}
+{%   set critical = hostvars[host].routeros_security_findings | default([]) | selectattr('result', 'eq', 'CRITICAL') | list %}
+{%   if critical %}
+
+{{ host }}:
+{%     for finding in critical %}
+  - {{ finding.title }}: {{ finding.message | truncate(120) }}
+{%     endfor %}
+{%   endif %}
+{% endfor %}

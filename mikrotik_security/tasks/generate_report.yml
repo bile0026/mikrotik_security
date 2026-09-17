@@ -5,6 +5,8 @@
   template:
     src: templates/email_report.j2
     dest: "{{ report_file }}"
+  vars:
+    report_date: "{{ lookup('pipe','date +%Y-%m-%d') }}"
   delegate_to: localhost
   run_once: true
 
@@ -34,7 +36,9 @@
           text: |-
             MikroTik Security Report *{{ location }}* {{ lookup('pipe','date +%Y-%m-%d') }}
 
-            ```{{ lookup('file', report_file) }}```
+            ```{{ slack_summary | truncate(2800) }}```
+  vars:
+    slack_summary: "{{ lookup('template', 'slack_report.j2') | trim }}"
   delegate_to: localhost
   run_once: true
   when:

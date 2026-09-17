@@ -1,0 +1,26 @@
+---
+# tasks for gathering RouterOS facts shared by every check
+
+- name: Facts - Get system resources
+  community.routeros.command:
+    commands:
+      - /system resource print
+  register: routeros_resource_output
+
+- name: Facts - Set RouterOS facts
+  ansible.builtin.set_fact:
+    routeros_version: "{{ routeros_resource_output.stdout[0] | regex_search('(^| )version: *.+') | default('', true) | regex_replace('^ ?version: *') | routeros_version }}"
+    routeros_board_name: "{{ routeros_resource_output.stdout[0] | regex_search('board-name: *.+') | default('', true) | regex_replace('^board-name: *') | trim }}"
+    routeros_security_findings: []
+    routeros_data: {}
+
+- name: Facts - Check whether configuration can be collected as JSON
+  ansible.builtin.set_fact:
+    routeros_security_collectors_supported: "{{ routeros_version | routeros_version_compare('>=', routeros_security_collector_min_version) }}"
+
+- name: Facts - Show RouterOS version
+  ansible.builtin.debug:
+    msg: >-
+      RouterOS {{ routeros_version or 'version unknown' }} on {{ routeros_board_name or 'unknown board' }}{{
+      '' if routeros_security_collectors_supported else
+      '; v2 checks need RouterOS ' ~ routeros_security_collector_min_version ~ ' or newer and will report UNKNOWN' }}

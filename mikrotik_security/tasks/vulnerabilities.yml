@@ -1,0 +1,13 @@
+---
+# tasks for checking the RouterOS version against published advisories
+
+- name: Vulnerabilities - Collect exposure details
+  ansible.builtin.include_tasks: collect.yml
+  vars:
+    routeros_collect: "{{ ['services', 'bandwidth_server'] + routeros_security_firewall_collectors }}"
+
+- name: Vulnerabilities - Evaluate advisories
+  ansible.builtin.set_fact:
+    routeros_security_findings: >-
+      {{ routeros_security_findings
+         + (routeros_data | routeros_vulnerability_findings(routeros_version, routeros_advisories)) }}

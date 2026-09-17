@@ -26,3 +26,10 @@
     fail_msg: "***DANGER*** unauthorized users found, if you have not done this on purpose your system may be compromised."
   register: unauth_users_assert
   ignore_errors: true
+
+- name: Unauth_users - Record findings
+  ansible.builtin.set_fact:
+    routeros_security_findings: >-
+      {{ routeros_security_findings + [
+           unauth_users_assert | routeros_assert_finding('unauth_users', 'users', 'Unauthorized users', 'CRITICAL', new_unauthorized_users)
+         ] }}

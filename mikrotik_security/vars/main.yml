@@ -1,2 +1,58 @@
 ---
 # vars file for mikrotik_security
+
+routeros_security_supported_checks:
+  - vulnerabilities
+  - mikrotrick
+  - security_baseline
+  - meris
+  - unauth_users
+
+# RouterOS menus the v2 checks read, as list or settings menus.
+# match keeps only list items whose property matches a RouterOS regex.
+routeros_security_collectors:
+  bandwidth_server: {path: /tool bandwidth-server}
+  cloud: {path: /ip cloud}
+  device_mode: {path: /system device-mode}
+  dhcp_clients: {path: /ip dhcp-client}
+  dhcp_servers: {path: /ip dhcp-server}
+  dns: {path: /ip dns}
+  files: {path: /file}
+  firewall_filter: {path: /ip firewall filter}
+  firewall_mangle: {path: /ip firewall mangle}
+  firewall_nat: {path: /ip firewall nat}
+  firewall_raw: {path: /ip firewall raw}
+  history: {path: /system history}
+  ipv6_firewall_filter: {path: /ipv6 firewall filter}
+  ipv6_firewall_mangle: {path: /ipv6 firewall mangle}
+  logs:
+    path: /log
+    match:
+      message: "{{ routeros_security_log_message_regex }}"
+      topics: critical
+  mac_server: {path: /tool mac-server}
+  mac_winbox: {path: /tool mac-server mac-winbox}
+  netwatch: {path: /tool netwatch}
+  ovpn_clients: {path: /interface ovpn-client}
+  # a settings menu on older releases and a list of servers on newer ones
+  ovpn_server: {path: /interface ovpn-server server}
+  ppp_profiles: {path: /ppp profile}
+  ppp_secrets: {path: /ppp secret}
+  pptp_clients: {path: /interface pptp-client}
+  pptp_server: {path: /interface pptp-server server}
+  romon: {path: /tool romon}
+  schedulers: {path: /system scheduler}
+  scripts: {path: /system script}
+  services: {path: /ip service}
+  socks: {path: /ip socks}
+  ssh_keys: {path: /user ssh-keys}
+  user_groups: {path: /user group}
+  users: {path: /user}
+
+routeros_security_firewall_collectors:
+  - firewall_filter
+  - firewall_nat
+  - firewall_mangle
+  - firewall_raw
+  - ipv6_firewall_filter
+  - ipv6_firewall_mangle
