@@ -1,10 +1,16 @@
 ---
 # defaults file for mikrotik_security
 
-remediate: false
+# Checks to run, in order. Supported: vulnerabilities, mikrotrick,
+# security_baseline, meris, unauth_users
 check_type:
-  - meris
-  - unauth_users
+  - vulnerabilities
+  - mikrotrick
+  - security_baseline
+
+# Only the meris and unauth_users checks can remediate. The v2 checks only report.
+remediate: false
+
 authorized_users:
   - test
   - ansible
@@ -12,10 +18,176 @@ authorized_users:
 tmp_users: []
 new_tmp_users: []
 
+# Users allowed to hold SSH public keys (/user ssh-keys).
+authorized_ssh_key_users: "{{ authorized_users }}"
+# Allowed SSH key owners (the comment on the public key). null skips this check.
+authorized_ssh_key_owners: ~
+# OpenVPN / PPTP client interface names that are expected. Any other client is a warning.
+authorized_ovpn_clients: []
+authorized_pptp_clients: []
+# PPP secret names that are expected. null skips the allowlist check
+# (PPPoE concentrators can have thousands of secrets).
+authorized_ppp_users: ~
+
+# Networks that /ip service "address" lists may allow. When empty the baseline
+# only checks that each enabled service has an address restriction that is not 0.0.0.0/0.
+routeros_management_networks: []
+# Services that may be enabled. Other enabled services are warnings.
+routeros_allowed_services:
+  - ssh
+  - winbox
+# Features that are expected to be enabled. Enabled features set to false are warnings.
+routeros_expected_features:
+  socks: false
+  romon: false
+  ovpn_server: false
+  pptp_server: false
+  bandwidth_server: false
+  cloud_ddns: false
+
+# Finding ids to downgrade to INFO, e.g. baseline.dns_remote_requests or baseline.service.*
+routeros_security_suppress: []
+# After the report is sent, fail hosts with a finding at or above this level:
+# none, warning or critical.
+routeros_security_fail_on: critical
+
+# Collection. The v2 checks read RouterOS menus as JSON, which needs :serialize
+# and :convert (RouterOS 7.13 or newer). Older devices report UNKNOWN for those checks.
+routeros_security_collector_min_version: "7.13"
+# Characters per output line. Keep below the SSH terminal width.
+routeros_security_collector_chunk_size: 64
+routeros_security_command_timeout: 120
+routeros_security_collect_logs: true
+routeros_security_collect_ppp_secrets: true
+# Scripts can contain credentials; hide collected configuration from job output.
+routeros_security_no_log: true
+
+# Vulnerability advisories. fixed_in lists the first fixed release of each
+# release train; see routeros_advisory_status in filter_plugins for the rules.
+# requires: firewall_tls_host only reports the advisory at full severity when a
+# firewall rule uses tls-host. context adds exposure notes to the finding.
+routeros_advisories:
+  - id: mikrotrick
+    name: MikroTrick
+    cves:
+      - CVE-2026-67276
+      - CVE-2026-86060
+      - CVE-2026-67277
+    severity: critical
+    url: https://mikrotik.com/supportsec/september-2026-vulnerability/
+    context:
+      - ssh_service
+      - bandwidth_server
+    fixed_in:
+      - version: "6.49.21"
+        channel: long-term
+      - version: "7.23.4"
+        channel: long-term
+      - version: "7.24.2"
+        channel: stable
+      - version: "7.25beta3"
+        channel: testing
+  - id: cve_2026_52346
+    name: tls-host firewall matching
+    cves:
+      - CVE-2026-52346
+    severity: warning
+    url: https://mikrotik.com/supportsec/cve-2026-52346/
+    requires: firewall_tls_host
+    fixed_in:
+      - version: "7.21.4"
+        channel: long-term
+      - version: "7.22.2"
+        channel: stable
+
+# MikroTrick indicators of compromise. Sources:
+#   https://blog.j2sw.com/netops/mikrotik-router-compromise-forensic-walkthrough/
+#   https://cert.pl/en/posts/2026/09/vulnerabilities-in-mikrotik-routeros-actively-exploited/
+# Attackers can rename all of these, so the behavioural checks below matter more.
+mikrotrick_known_users:
+  - svcnet
+  - cfgmarket
+  - ops
+mikrotrick_known_ssh_key_owners:
+  - mtops
+mikrotrick_known_scheduler_names:
+  - netupd
+  - cfg-r
+  - cfg-u
+  - cfg-t
+  - cfg-res
+  - cfg-v2
+  - cfg-v5
+  - wan-boot
+  - wan-check
+  - health-check
+mikrotrick_known_script_names:
+  - cfg-rpt
+  - persist-v2
+  - wan-check
+  - health-check
+mikrotrick_known_files:
+  - mt_setup.rsc
+  - mt_setup_v4.rsc
+  - persist_mt.rsc
+  - persist_mt_v4.rsc
+  - persist_mt_v5.rsc
+  - mt_v5.rsc
+  - pmt.rsc
+  - pv4.rsc
+  - mt_pub.key
+  - cert_export_ovpnca.crt
+mikrotrick_known_c2_addresses:
+  - 64.44.141.220
+  - 23.95.217.226
+  - 82.192.72.4
+  - 103.102.31.18
+mikrotrick_suspicious_firewall_comments:
+  - cfgmarket-
+  - ovpn-cfgmarket
+# Substrings that mark any user, interface, script or rule as attacker-created.
+mikrotrick_known_name_fragments:
+  - cfgmarket
+# Python regexes matched against log messages and /system history.
+# "-2" is the crafted username CVE-2026-86060 exploitation leaves behind.
+mikrotrick_log_patterns:
+  - 'for user -2 from'
+  - 'ssh:-2@'
+# RouterOS regex used on the router to pick which log entries to collect.
+routeros_security_log_message_regex: 'logged in|login failure|lagged|-2@|added by|changed by|removed by'
+
+# Scripts (by name) that are known to be legitimate. They skip the IoC name and
+# behavioural checks but are still searched for C2 addresses.
+mikrotrick_trusted_script_names: []
+# A script, scheduler or embedded script matching at least
+# mikrotrick_suspicious_min_matches of these is reported as a WARNING.
+mikrotrick_suspicious_min_matches: 2
+mikrotrick_suspicious_script_patterns:
+  fetch: 'tool[ /]+fetch'
+  import: '(^|[\s;{/])import\b'
+  user_change: 'user[ /]+(add|set)\b'
+  ssh_keys: 'ssh-keys'
+  ssh: '\bssh\b'
+  ip_service: 'ip[ /]+service'
+  vpn_interface: 'interface[ /]+(ovpn|pptp|l2tp|sstp)'
+  socks: 'ip[ /]+socks'
+  scheduler_add: 'system[ /]+scheduler[ /]+add'
+  cloud_ddns: 'ip[ /]+cloud'
+
 # report vars
 report_file: "Mikrotik Security Report {{ location }} {{ lookup('pipe','date +%Y-%m-%d') }}.txt"
 generate_report: true
 location: Ansible
+# Include PASS findings in the report.
+routeros_report_show_pass: true
+# Report formats to write. Supported: txt (one block per host), csv (one row per
+# finding, for sorting a whole fleet) and html (fleet table plus per-host
+# detail). Each format is written next to report_file with its own extension,
+# and the email attaches every format that was written. When html is included
+# it also becomes the email body.
+routeros_report_formats:
+  - csv
+  - html
 
 # email report vars
 #smtp_server: smtp.example.com

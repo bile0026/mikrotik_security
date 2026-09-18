@@ -1,16 +1,46 @@
 ---
 # tasks file for mikrotik_security
 
-- debug:
-    msg: "Will include tasks for {{ item }} security checks"
-  loop: "{{ check_type }}"
+- name: Validate requested security checks
+  ansible.builtin.assert:
+    that:
+      - check_type | difference(routeros_security_supported_checks) | length == 0
+      - routeros_security_fail_on | lower in ['none', 'warning', 'critical']
+    fail_msg: >-
+      check_type may only contain {{ routeros_security_supported_checks | join(', ') }}
+      and routeros_security_fail_on must be none, warning or critical
+    quiet: true
+
+- name: Include tasks for RouterOS facts
+  ansible.builtin.include_tasks: facts.yml
 
 - name: Include tasks for security checks
-  include_tasks: "{{ item }}.yml"
+  ansible.builtin.include_tasks: "{{ item }}.yml"
   loop: "{{ check_type }}"
 
+- name: Apply finding suppressions
+  ansible.builtin.set_fact:
+    routeros_security_findings: "{{ routeros_security_findings | routeros_findings_suppress(routeros_security_suppress) }}"
+
+- name: Show findings
+  ansible.builtin.debug:
+    msg: "{{ item.result }} {{ item.id }}: {{ item.message }}"
+  loop: "{{ routeros_security_findings | routeros_findings_sort }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when: item.result != 'PASS'
+
 - name: Include tasks for report generation and email
-  include_tasks: generate_report.yml
-  when:
-    - generate_report
-    - meris_full_assert.failed is defined or unauth_users_assert.failed is defined
+  ansible.builtin.include_tasks: generate_report.yml
+  when: generate_report | bool
+
+- name: Fail hosts with findings at or above routeros_security_fail_on
+  ansible.builtin.assert:
+    that: blocking_findings | length == 0
+    fail_msg: >-
+      {{ blocking_findings | length }} finding(s) at {{ routeros_security_fail_on | upper }} or above:
+      {{ blocking_findings | map(attribute='id') | join(', ') }}
+    success_msg: "No findings at {{ routeros_security_fail_on | upper }} or above"
+  vars:
+    blocking_findings: "{{ routeros_security_findings | routeros_findings_at_least(routeros_security_fail_on) }}"
+  when: routeros_security_fail_on | lower != 'none'

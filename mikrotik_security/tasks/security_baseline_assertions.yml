@@ -1,0 +1,11 @@
+---
+# tasks for turning RouterOS management settings into findings
+
+- name: Security baseline - Evaluate settings
+  ansible.builtin.set_fact:
+    routeros_security_findings: "{{ routeros_security_findings + (routeros_data | routeros_baseline_findings(baseline_settings)) }}"
+  vars:
+    baseline_settings:
+      management_networks: "{{ routeros_management_networks }}"
+      allowed_services: "{{ routeros_allowed_services }}"
+      expected_features: "{{ routeros_expected_features }}"

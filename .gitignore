@@ -1,2 +1,5 @@
 *.txt
 test.yml
+Mikrotik Security Report*.csv
+Mikrotik Security Report*.html
+scratch_inventory.ini

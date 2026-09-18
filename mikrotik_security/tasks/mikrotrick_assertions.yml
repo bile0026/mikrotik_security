@@ -1,0 +1,29 @@
+---
+# tasks for turning MikroTrick evidence into findings
+
+- name: MikroTrick - Evaluate evidence
+  ansible.builtin.set_fact:
+    routeros_security_findings: "{{ routeros_security_findings + (routeros_data | routeros_mikrotrick_findings(mikrotrick_settings)) }}"
+  vars:
+    mikrotrick_settings:
+      authorized_users: "{{ authorized_users }}"
+      authorized_ssh_key_users: "{{ authorized_ssh_key_users }}"
+      authorized_ssh_key_owners: "{{ authorized_ssh_key_owners }}"
+      authorized_ovpn_clients: "{{ authorized_ovpn_clients }}"
+      authorized_pptp_clients: "{{ authorized_pptp_clients }}"
+      authorized_ppp_users: "{{ authorized_ppp_users }}"
+      expected_features: "{{ routeros_expected_features }}"
+      known_users: "{{ mikrotrick_known_users }}"
+      known_ssh_key_owners: "{{ mikrotrick_known_ssh_key_owners }}"
+      known_scheduler_names: "{{ mikrotrick_known_scheduler_names }}"
+      known_script_names: "{{ mikrotrick_known_script_names }}"
+      known_files: "{{ mikrotrick_known_files }}"
+      known_c2_addresses: "{{ mikrotrick_known_c2_addresses }}"
+      suspicious_firewall_comments: "{{ mikrotrick_suspicious_firewall_comments }}"
+      known_name_fragments: "{{ mikrotrick_known_name_fragments }}"
+      log_patterns: "{{ mikrotrick_log_patterns }}"
+      trusted_script_names: "{{ mikrotrick_trusted_script_names }}"
+      suspicious_script_patterns: "{{ mikrotrick_suspicious_script_patterns }}"
+      suspicious_min_matches: "{{ mikrotrick_suspicious_min_matches }}"
+      collect_logs: "{{ routeros_security_collect_logs }}"
+      collect_ppp_secrets: "{{ routeros_security_collect_ppp_secrets }}"

@@ -1,0 +1,39 @@
+---
+# tasks for reading RouterOS menus into routeros_data
+# expects routeros_collect: list of routeros_security_collectors names
+
+- name: Collect - Skip menus another check already read
+  ansible.builtin.set_fact:
+    routeros_collect_pending: "{{ routeros_collect | difference(routeros_data.keys() | list) }}"
+
+- name: Collect - Read RouterOS configuration
+  community.routeros.command:
+    commands:
+      - "{{ routeros_security_collectors[collector_name] | routeros_collector_command(routeros_security_collector_chunk_size) }}"
+  loop: "{{ routeros_collect_pending }}"
+  loop_control:
+    loop_var: collector_name
+  vars:
+    ansible_command_timeout: "{{ routeros_security_command_timeout }}"
+  register: routeros_collect_output
+  when: routeros_security_collectors_supported
+  ignore_errors: true
+  no_log: "{{ routeros_security_no_log | bool }}"
+
+- name: Collect - Store collected configuration
+  ansible.builtin.set_fact:
+    routeros_data: >-
+      {{ routeros_data
+         | combine(routeros_collect_output.results | default([]) | routeros_collected_data)
+         | combine(routeros_collect_pending
+                   | routeros_collectors_unsupported('requires RouterOS ' ~ routeros_security_collector_min_version ~ ' or newer')
+                   if not routeros_security_collectors_supported else {}) }}
+  no_log: "{{ routeros_security_no_log | bool }}"
+
+- name: Collect - Report menus that could not be read
+  ansible.builtin.debug:
+    msg: "Could not read {{ routeros_security_collectors[unread.key].path }}: {{ unread.value.error }}"
+  loop: "{{ routeros_data | dict2items | selectattr('key', 'in', routeros_collect_pending) | rejectattr('value.status', 'eq', 'ok') | list }}"
+  loop_control:
+    loop_var: unread
+    label: "{{ unread.key }}"

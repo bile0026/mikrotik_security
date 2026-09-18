@@ -43,11 +43,20 @@
         } else={ :put "notfound breach user"}
   register: meris_user_check
 
+- name: Meris - Summarize indicators
+  ansible.builtin.set_fact:
+    meris_found:
+      socks: "{{ meris_socks_check.stdout[0] is search('enabled: +yes') }}"
+      file: "{{ meris_file_check.stdout[0] is search('possible breach file$') }}"
+      script: "{{ meris_script_check.stdout[0] is search('possible breach script$') }}"
+      schedule: "{{ meris_schedule_check.stdout[0] is search('possible breach schedule$') }}"
+      user: "{{ meris_user_check.stdout[0] is search('possible breach user$') }}"
+
 - name: Meris - Include remediation tasks if requested
   include_tasks: "meris_remediation.yml"
   when:
     - remediate
-    - "'yes' in {{(meris_socks_check.stdout[0]  | regex_search('enabled: ([a-z]{2,3})', '\\1'))}} or 'possible breach file' in {{(meris_file_check.stdout[0] | regex_search('([a-z]{8} breach file)$', '\\1'))}} or 'possible breach script' in {{ (meris_script_check.stdout[0]  | regex_search('([a-z]{8} breach script)$', '\\1')) }} or 'possible breach schedule' in {{ (meris_schedule_check.stdout[0]  | regex_search('([a-z]{8} breach schedule)$', '\\1')) }} or 'possible breach user' in {{ (meris_user_check.stdout[0]  | regex_search('([a-z]{8} breach user)$', '\\1')) }}"
+    - meris_found.values() | select | list | length > 0
 
 - name: Meris - Include Assertion tasks to verify results
   include_tasks: "meris_assertions.yml"

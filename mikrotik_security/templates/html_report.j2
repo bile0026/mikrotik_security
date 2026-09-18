@@ -1,0 +1,112 @@
+{#
+  Self-contained HTML report: a fleet table first, then one section per host.
+  Styles are inline attributes rather than a stylesheet because mail clients
+  routinely strip <style> blocks.
+#}
+{% set colors = {
+     'CRITICAL': '#b3261e',
+     'WARNING':  '#a15c00',
+     'UNKNOWN':  '#5b5b66',
+     'INFO':     '#1c5d99',
+     'PASS':     '#1b6e3c',
+     'NOT RUN':  '#5b5b66',
+   } %}
+{% set cell = 'padding:6px 10px;border-bottom:1px solid #e3e3e8;vertical-align:top;' %}
+{% set head = 'padding:6px 10px;border-bottom:2px solid #c9c9d1;text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#5b5b66;' %}
+{% macro badge(result) %}
+<span style="display:inline-block;padding:1px 7px;border-radius:3px;font:bold 11px/1.7 sans-serif;color:#fff;background:{{ colors.get(result, '#5b5b66') }};">{{ result | e }}</span>
+{%- endmacro %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MikroTik Security Report - {{ location | e }} - {{ report_date }}</title>
+</head>
+<body style="margin:0;padding:24px;background:#f6f6f8;color:#1a1a1f;font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+<div style="max-width:960px;margin:0 auto;">
+
+<h1 style="margin:0 0 4px;font-size:20px;">MikroTik Security Report</h1>
+<p style="margin:0 0 20px;color:#5b5b66;">{{ location | e }} &middot; {{ report_date }} &middot; checks: {{ check_type | join(', ') | e }}</p>
+
+<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e3e3e8;border-radius:4px;margin-bottom:24px;">
+<thead>
+<tr>
+<th style="{{ head }}">Host</th>
+<th style="{{ head }}">RouterOS</th>
+<th style="{{ head }}">Board</th>
+<th style="{{ head }}">Worst</th>
+<th style="{{ head }}">Critical</th>
+<th style="{{ head }}">Warning</th>
+<th style="{{ head }}">Unknown</th>
+</tr>
+</thead>
+<tbody>
+{% for host in ansible_play_hosts_all %}
+{%   set hv = hostvars[host] %}
+{%   set findings = hv.routeros_security_findings | default(none) %}
+{%   set summary = findings | routeros_findings_summary if findings is not none else none %}
+<tr>
+<td style="{{ cell }}"><a href="#host-{{ loop.index }}" style="color:#1c5d99;text-decoration:none;font-weight:600;">{{ host | e }}</a></td>
+<td style="{{ cell }}">{{ hv.routeros_version | default('') | e }}</td>
+<td style="{{ cell }}">{{ hv.routeros_board_name | default('') | e }}</td>
+<td style="{{ cell }}">{{ badge(summary.result if summary else 'NOT RUN') }}</td>
+{% for level in ['CRITICAL', 'WARNING', 'UNKNOWN'] %}
+<td style="{{ cell }}{% if summary and summary.counts[level] %}color:{{ colors[level] }};font-weight:600;{% else %}color:#9a9aa4;{% endif %}">{{ summary.counts[level] if summary else '-' }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% for host in ansible_play_hosts_all %}
+{%   set hv = hostvars[host] %}
+{%   set findings = hv.routeros_security_findings | default(none) %}
+{%   set shown = (findings | routeros_findings_sort | selectattr('result', 'ne', 'PASS') | list) if findings is not none else [] %}
+{%   set passed = (findings | selectattr('result', 'eq', 'PASS') | list) if findings is not none else [] %}
+<h2 id="host-{{ loop.index }}" style="margin:0 0 8px;font-size:16px;">
+{{ host | e }}
+<span style="font-weight:400;color:#5b5b66;font-size:13px;">
+{{- ' &middot; RouterOS ' ~ (hv.routeros_version | e) if hv.routeros_version | default('') }}
+{{- ' &middot; ' ~ (hv.routeros_board_name | e) if hv.routeros_board_name | default('') }}
+</span>
+</h2>
+<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e3e3e8;border-radius:4px;margin-bottom:24px;">
+<tbody>
+{%   if findings is none %}
+<tr><td style="{{ cell }}">{{ badge('NOT RUN') }}</td><td style="{{ cell }}">Host was unreachable or failed before the checks finished.</td></tr>
+{%   elif not shown %}
+<tr><td style="{{ cell }}">{{ badge('PASS') }}</td><td style="{{ cell }}">No findings above PASS.</td></tr>
+{%   endif %}
+{%   for finding in shown %}
+<tr>
+<td style="{{ cell }}white-space:nowrap;">{{ badge(finding.result) }}</td>
+<td style="{{ cell }}">
+<strong>{{ finding.title | e }}</strong><br>
+{{ finding.message | e }}
+{% if finding.evidence %}
+<ul style="margin:6px 0 0;padding-left:18px;color:#5b5b66;font-size:13px;">
+{% for line in finding.evidence %}
+<li>{{ line | e }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+<div style="margin-top:6px;color:#9a9aa4;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">{{ finding.id | e }}</div>
+</td>
+</tr>
+{%   endfor %}
+{%   if routeros_report_show_pass | bool and passed %}
+<tr>
+<td style="{{ cell }}white-space:nowrap;">{{ badge('PASS') }}</td>
+<td style="{{ cell }}color:#5b5b66;font-size:13px;">
+{{ passed | length }} check(s) passed:
+{{ passed | map(attribute='title') | join(', ') | e }}
+</td>
+</tr>
+{%   endif %}
+</tbody>
+</table>
+{% endfor %}
+
+</div>
+</body>
+</html>
