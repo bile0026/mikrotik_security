@@ -1,0 +1,14 @@
+{# One row per finding so the whole fleet can be sorted and filtered at once. #}
+{{ ['host', 'address', 'routeros_version', 'board', 'check', 'id', 'result', 'title', 'message', 'evidence'] | routeros_csv_row }}
+{% for host in ansible_play_hosts_all %}
+{%   set hv = hostvars[host] %}
+{%   set findings = hv.routeros_security_findings | default(none) %}
+{%   set host_columns = [host, hv.ansible_host | default(host), hv.routeros_version | default(''), hv.routeros_board_name | default('')] %}
+{%   if findings is none %}
+{{ (host_columns + ['', '', 'NOT RUN', 'Checks did not run', 'Host was unreachable or failed before the checks finished', '']) | routeros_csv_row }}
+{%   else %}
+{%     for finding in findings | routeros_findings_sort if routeros_report_show_pass | bool or finding.result != 'PASS' %}
+{{ (host_columns + [finding.check, finding.id, finding.result, finding.title, finding.message, finding.evidence | join(' | ')]) | routeros_csv_row }}
+{%     endfor %}
+{%   endif %}
+{% endfor %}

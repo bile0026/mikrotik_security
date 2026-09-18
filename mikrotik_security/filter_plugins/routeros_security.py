@@ -18,6 +18,8 @@ __metaclass__ = type
 
 import base64
 import binascii
+import csv
+import io
 import ipaddress
 import json
 import re
@@ -1230,9 +1232,24 @@ def routeros_findings_summary(findings):
     return {'result': _worst([f['result'] for f in findings or []]), 'counts': counts}
 
 
+def routeros_csv_row(values):
+    """Render one CSV row, quoted so commas, quotes and newlines stay intact."""
+    if not isinstance(values, (list, tuple)):
+        raise AnsibleFilterError('routeros_csv_row expects a list, got %r' % (values,))
+    buf = io.StringIO()
+    # QUOTE_ALL keeps every cell quoted whether or not it needs it, and an empty
+    # lineterminator leaves the newline to the template. Empty cells are kept so
+    # the columns stay aligned.
+    csv.writer(buf, quoting=csv.QUOTE_ALL, lineterminator='').writerow(
+        [_text(value) for value in values]
+    )
+    return buf.getvalue()
+
+
 class FilterModule(object):
     def filters(self):
         return {
+            'routeros_csv_row': routeros_csv_row,
             'routeros_collector_command': routeros_collector_command,
             'routeros_collector_decode': routeros_collector_decode,
             'routeros_collected_data': routeros_collected_data,

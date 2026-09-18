@@ -219,11 +219,29 @@ authorized_users:
 
 # Reports
 
-The report groups findings by host, most severe first, and starts with a summary line per host. Hosts that were unreachable or failed before the checks finished are listed as `NOT RUN`. Set `routeros_report_show_pass: false` to leave out `PASS` findings.
+Reports group findings by host, most severe first, and start with a summary per host. Hosts that were unreachable or failed before the checks finished are listed as `NOT RUN`. Set `routeros_report_show_pass: false` to leave out `PASS` findings, which is worth doing on a large fleet: a clean router still produces around 20 `PASS` lines.
+
+## Report formats
+
+`routeros_report_formats` picks which formats get written. Each one is written next to `report_file` with its own extension, so `Mikrotik Security Report Ansible 2026-09-17.txt` is joined by `.csv` and `.html` versions.
+
+| Format | Layout | Good for |
+| ------ | ------ | -------- |
+| `txt` | A block of text per host | A couple of routers, or piping into other tools |
+| `csv` | One row per finding, with `host,address,routeros_version,board,check,id,result,title,message,evidence` columns | Many routers: sort by severity, filter by check, or pivot in a spreadsheet |
+| `html` | A fleet table of one row per host with per-severity counts, linked to per-host detail below | Reading the whole fleet at a glance, and as an email body |
+
+```yaml
+routeros_report_formats:
+  - csv
+  - html
+```
+
+In CSV, a finding's evidence lines are joined with ` | ` to keep one finding per row. Every cell is quoted, so commas and quotes in RouterOS values stay intact. In HTML, `PASS` findings collapse into a single row per host listing their titles.
 
 ## Email reports
 
-If you wish to have a report emailed to you, include the variables for the email task. This will email a txt file with the report.
+If you wish to have a report emailed to you, include the variables for the email task. Every format listed in `routeros_report_formats` is attached. If `html` is one of them, the report also becomes the message body so it is readable without opening an attachment.
 
 * At this point, it will always email, even if no vulnerabilities were found.
 

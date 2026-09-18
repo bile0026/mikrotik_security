@@ -1,10 +1,20 @@
 ---
-# tasks for emailing reports
+# tasks for writing and sending reports
 
-- name: Generate report
+- name: Validate requested report formats
+  ansible.builtin.assert:
+    that: routeros_report_formats | difference(routeros_report_templates.keys() | list) | length == 0
+    fail_msg: >-
+      routeros_report_formats may only contain
+      {{ routeros_report_templates.keys() | join(', ') }}
+    quiet: true
+  run_once: true
+
+- name: Generate reports
   template:
-    src: templates/email_report.j2
-    dest: "{{ report_file }}"
+    src: "templates/{{ routeros_report_templates[item] }}"
+    dest: "{{ routeros_report_files[item] }}"
+  loop: "{{ routeros_report_formats }}"
   vars:
     report_date: "{{ lookup('pipe','date +%Y-%m-%d') }}"
   delegate_to: localhost
@@ -16,9 +26,10 @@
     to: "{{ email_addresses }}"
     port: "{{ smtp_port }}"
     subject: MikroTik Security report for {{ location }} {{ lookup('pipe','date +%Y-%m-%d') }}
-    subtype: html
+    subtype: "{{ 'html' if 'html' in routeros_report_formats else 'plain' }}"
+    body: "{{ lookup('file', routeros_report_files['html']) if 'html' in routeros_report_formats else omit }}"
     host: "{{ smtp_server }}"
-    attach: "{{ report_file }}"
+    attach: "{{ routeros_report_formats | map('extract', routeros_report_files) | list }}"
   delegate_to: localhost
   run_once: true
   when:

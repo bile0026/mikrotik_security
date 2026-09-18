@@ -56,3 +56,15 @@ routeros_security_firewall_collectors:
   - firewall_raw
   - ipv6_firewall_filter
   - ipv6_firewall_mangle
+
+# Report formats and where each one is written. The file name comes from
+# report_file with its extension swapped, so all formats land side by side.
+routeros_report_templates:
+  txt: email_report.j2
+  csv: csv_report.j2
+  html: html_report.j2
+
+routeros_report_files:
+  txt: "{{ report_file }}"
+  csv: "{{ report_file | regex_replace('\\.[^./\\\\]*$', '') }}.csv"
+  html: "{{ report_file | regex_replace('\\.[^./\\\\]*$', '') }}.html"

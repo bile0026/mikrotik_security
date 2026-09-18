@@ -574,3 +574,16 @@ def test_suppress_sort_threshold_summary():
     assert summary['result'] == 'CRITICAL' and summary['counts']['WARNING'] == 1
     with pytest.raises(rs.AnsibleFilterError):
         rs.routeros_findings_at_least(findings, 'bogus')
+
+
+def test_csv_row_quotes_and_keeps_empty_cells():
+    assert rs.routeros_csv_row(['lab-rtr', 'ssh', 'WARNING']) == '"lab-rtr","ssh","WARNING"'
+    # commas, quotes and newlines inside a finding must not break the columns
+    row = rs.routeros_csv_row(['a,b', 'say "hi"', 'line1\nline2'])
+    assert row == '"a,b","say ""hi""","line1\nline2"'
+    # empty and None cells are kept so columns stay aligned
+    assert rs.routeros_csv_row(['x', '', None, 'y']) == '"x","","","y"'
+    assert rs.routeros_csv_row([True, False, 3, ['a', 'b']]) == '"yes","no","3","a,b"'
+    assert rs.routeros_csv_row([]) == ''
+    with pytest.raises(rs.AnsibleFilterError):
+        rs.routeros_csv_row('not-a-list')

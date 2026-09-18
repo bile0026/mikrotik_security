@@ -180,6 +180,13 @@ generate_report: true
 location: Ansible
 # Include PASS findings in the report.
 routeros_report_show_pass: true
+# Report formats to write. Supported: txt (one block per host), csv (one row per
+# finding, for sorting a whole fleet) and html (fleet table plus per-host
+# detail). Each format is written next to report_file with its own extension,
+# and the email attaches every format that was written. When html is included
+# it also becomes the email body.
+routeros_report_formats:
+  - txt
 
 # email report vars
 #smtp_server: smtp.example.com
