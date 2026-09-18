@@ -186,7 +186,8 @@ routeros_report_show_pass: true
 # and the email attaches every format that was written. When html is included
 # it also becomes the email body.
 routeros_report_formats:
-  - txt
+  - csv
+  - html
 
 # email report vars
 #smtp_server: smtp.example.com
