@@ -148,6 +148,10 @@ def test_collector_command():
     assert ':parse ":return [/user print as-value]"' in cmd
     assert ' get' not in cmd
     assert ':local c 32;' in cmd and ':if (true)' in cmd
+    # as-value omits flags, so each one is looked up with "find where"
+    for flag in ('disabled', 'dynamic', 'invalid'):
+        assert ':parse ":return [/user find where %s]"' % flag in cmd
+        assert ':set ($r->"%s") false' % flag in cmd
     assert 'RSAB|' not in cmd and 'RSAJ:' not in cmd and 'RSAZ|' not in cmd and 'RSAX|' not in cmd
     assert '"password"' in cmd
     assert 'value=\\$1 to=json options=json.no-string-conversion' in cmd
@@ -493,7 +497,7 @@ def test_baseline_exposed_services():
         {'name': 'ssh', 'port': 22, 'disabled': False, 'address': ['0.0.0.0/0']},
         {'name': 'winbox', 'port': 8291, 'disabled': False, 'address': ['10.0.0.0/8']},
         {'name': 'telnet', 'port': 23, 'disabled': False, 'address': []},
-        {'name': 'reverse-proxy', 'port': 443, 'disabled': False, 'address': ['64.90.67.144/29']},
+        {'name': 'reverse-proxy', 'port': 443, 'disabled': False, 'address': ['64.90.67.144/29'], 'dynamic': False},
     )
     findings = baseline(data)
     assert findings['baseline.service.ssh']['result'] == 'WARNING'
@@ -587,3 +591,49 @@ def test_csv_row_quotes_and_keeps_empty_cells():
     assert rs.routeros_csv_row([]) == ''
     with pytest.raises(rs.AnsibleFilterError):
         rs.routeros_csv_row('not-a-list')
+
+
+def test_baseline_ignores_dynamic_service_listeners():
+    """RouterOS lists dynamic listeners in /ip service; they are not findings.
+
+    Taken from a CCR2004 on 7.19.2, where /ip service holds resolver, dhcp,
+    ntp, snmp, route_BGP, log and zerotier-one alongside the built-in services,
+    several of them repeated per protocol and per connection.
+    """
+    dynamic_rows = [
+        {'name': 'resolver', 'port': 53, 'dynamic': True},
+        {'name': 'resolver', 'port': 53, 'dynamic': True},
+        {'name': 'dhcp', 'port': 67, 'dynamic': True},
+        {'name': 'ntp', 'port': 123, 'dynamic': True},
+        {'name': 'snmp', 'port': 161, 'dynamic': True},
+        {'name': 'route_BGP', 'port': 179, 'dynamic': True},
+        {'name': 'log', 'port': 514, 'dynamic': True},
+        {'name': 'zerotier-one', 'port': 9993, 'dynamic': True},
+        {'name': 'zerotier-one', 'port': 46118, 'dynamic': True},
+    ]
+    builtin_rows = [
+        {'name': 'ftp', 'port': 21, 'disabled': True, 'address': []},
+        {'name': 'telnet', 'port': 23, 'disabled': True, 'address': []},
+        {'name': 'ssh', 'port': 2937, 'disabled': False, 'address': []},
+        {'name': 'winbox', 'port': 2938, 'disabled': False, 'address': []},
+    ]
+
+    data = clean_data()
+    data['services'] = ok(*(dynamic_rows + builtin_rows))
+    findings = baseline(data)
+    assert [f for f in findings if f.startswith('baseline.service.')] == [
+        'baseline.service.telnet', 'baseline.service.ftp', 'baseline.service.ssh', 'baseline.service.winbox']
+    assert findings['baseline.service.telnet']['result'] == 'PASS'
+    assert findings['baseline.service.ftp']['evidence'][0] == 'enabled: no'
+
+    # Same menu with no dynamic flag anywhere: the built-in names still stand,
+    # and the dynamic listeners must not become services.
+    stripped = [dict((k, v) for k, v in row.items() if k != 'dynamic') for row in dynamic_rows]
+    data['services'] = ok(*(stripped + builtin_rows))
+    names = [f for f in baseline(data) if f.startswith('baseline.service.')]
+    assert names == ['baseline.service.telnet', 'baseline.service.ftp', 'baseline.service.ssh', 'baseline.service.winbox']
+
+    # A service added in a newer release is kept when the flag is present
+    data['services'] = ok(*(dynamic_rows + builtin_rows + [
+        {'name': 'reverse-proxy', 'port': 443, 'disabled': False, 'address': []}]))
+    assert 'baseline.service.reverse-proxy' in baseline(data)

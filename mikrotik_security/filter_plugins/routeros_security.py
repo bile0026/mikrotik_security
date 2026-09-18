@@ -42,6 +42,9 @@ _MARKER_PREFIX = 'RSA'
 _MARKER_RE = re.compile(r'RSA(?:(B)\||J:([A-Za-z0-9+/=]*)\||(X)\||(Z)\|)')
 _UNSAFE_SCRIPT_CHARS = re.compile(r'["$\\]')
 
+# Flags RouterOS shows in "print" but leaves out of "as-value" output.
+_ITEM_FLAGS = ('disabled', 'dynamic', 'invalid')
+
 
 # --------------------------------------------------------------------------
 # helpers
@@ -172,6 +175,11 @@ def routeros_collector_command(collector, chunk_size=64, redact_keys=REDACT_KEYS
     single item. "get" is never used: on a list menu it waits for an
     interactive "numbers:" prompt.
 
+    Neither form returns the flag properties, so a disabled /ip service entry
+    is indistinguishable from an enabled one. disabled, dynamic and invalid are
+    therefore read separately with "find where <flag>" and stamped onto the
+    items.
+
     Each item is serialized separately and printed in short marked lines, so
     terminal wrapping and the error patterns of the routeros terminal plugin
     cannot corrupt it. Paths are resolved with :parse so a menu that does not
@@ -194,14 +202,36 @@ def routeros_collector_command(collector, chunk_size=64, redact_keys=REDACT_KEYS
 
     where = ' || '.join('([:tostr ($r->"%s")] ~ "%s")' % (key, regex) for key, regex in sorted(match.items()))
     redact = ';'.join('"%s"' % key for key in redact_keys)
+    # "as-value" never returns the flag properties: a disabled /ip service entry
+    # comes back exactly like an enabled one. Each flag is therefore looked up
+    # once per menu with "find where <flag>", whose ids are turned into a
+    # keyed array so stamping an item is a lookup rather than a scan, which
+    # matters on menus with thousands of items. A menu without the property
+    # errors out, and the flag is then left off the item rather than written as
+    # a misleading false. An empty result is still an array, so "nothing is
+    # disabled" is recorded as such.
+    find_flags = ' '.join(
+        ':local ok{flag} false; :local m{flag} ({{}}); '
+        ':do {{:local q{flag} [:parse ":return [{path} find where {flag}]"]; :local a{flag} [$q{flag}]; '
+        ':if ([:typeof $a{flag}] = "array") do={{'
+        ':foreach v in=$a{flag} do={{:set ($m{flag}->[:tostr $v]) true}}; :set ok{flag} true}}}} '
+        'on-error={{}}; '.format(flag=flag, path=path)
+        for flag in _ITEM_FLAGS
+    )
+    stamp_flags = ' '.join(
+        ':if ($ok{flag}) do={{:set ($r->"{flag}") false; '
+        ':if ([:typeof ($m{flag}->[:tostr ($r->".id")])] != "nothing") do={{:set ($r->"{flag}") true}}}}; '.format(flag=flag)
+        for flag in _ITEM_FLAGS
+    )
     emit = (
+        ':if ([:typeof ($r->".id")] != "nothing") do={%s}; '
         ':foreach k in={%s} do={:if ([:typeof ($r->$k)] != "nothing") do={:set ($r->$k) "REDACTED"}}; '
         ':local s; :do {:set s [$ser $r]} on-error={:set s [:serialize value=$r to=json]}; '
         ':set s [:convert $s from=raw to=base64]; '
         ':put ($p . "B|"); '
         ':local i 0; '
         ':while ($i < [:len $s]) do={:put ($p . "J:" . [:pick $s $i ($i + $c)] . "|"); :set i ($i + $c)}'
-    ) % redact
+    ) % (stamp_flags.strip(), redact)
     # Without json.no-string-conversion (added after 7.13) "22" and "007"
     # serialize as numbers; _text() tidies the floats that produces.
     return (
@@ -209,6 +239,7 @@ def routeros_collector_command(collector, chunk_size=64, redact_keys=REDACT_KEYS
         ':local ser; :do {{:set ser [:parse ":return [:serialize value=\\$1 to=json options=json.no-string-conversion]"]}} on-error={{}}; '
         ':do {{'
         ':local d; '
+        '{find_flags}'
         ':do {{:local f [:parse ":return [{path} print detail as-value]"]; :set d [$f]}} '
         'on-error={{:local g [:parse ":return [{path} print as-value]"]; :set d [$g]}}; '
         ':if ([:typeof ($d->0)] = "array") do={{'
@@ -216,7 +247,8 @@ def routeros_collector_command(collector, chunk_size=64, redact_keys=REDACT_KEYS
         '}} else={{:if ([:len $d] > 0) do={{:local r $d; {emit}}}}}'
         '}} on-error={{:put ($p . "X|")}}; '
         ':put ($p . "Z|")'
-    ).format(marker=_MARKER_PREFIX, chunk=chunk_size, path=path, where=where or 'true', emit=emit)
+    ).format(marker=_MARKER_PREFIX, chunk=chunk_size, path=path, where=where or 'true', emit=emit,
+             find_flags=find_flags)
 
 
 def routeros_collector_decode(stdout):
@@ -393,10 +425,35 @@ _FIREWALL_COLLECTORS = (
 _SERVICE_NAMES = ('telnet', 'ftp', 'www', 'ssh', 'www-ssl', 'api', 'winbox', 'api-ssl')
 
 
+def _service_entries(d):
+    """The configurable /ip service entries, keyed by name.
+
+    RouterOS lists more than the eight built-in services here. Dynamic
+    listeners (resolver, dhcp, ntp, snmp, route_BGP, log, zerotier-one) show up
+    with a D flag, repeat per protocol, and get a row per established
+    connection. None of them can be configured, so only the built-in names are
+    real findings.
+    """
+    items = d.items('services')
+    # Prefer the flag, so services added in newer RouterOS releases are still
+    # reported. Only when the menu comes back without it anywhere do we fall
+    # back to the built-in names, which is enough to drop the dynamic rows.
+    flagged = any('dynamic' in service for service in items)
+    services = {}
+    for service in items:
+        name = _text(service.get('name'))
+        if not name:
+            continue
+        if _bool(service.get('dynamic')) if flagged else name not in _SERVICE_NAMES:
+            continue
+        services.setdefault(name, service)
+    return services
+
+
 def _enabled_service(d, name):
-    for service in d.items('services'):
-        if _text(service.get('name')) == name and not _bool(service.get('disabled')):
-            return service
+    service = _service_entries(d).get(name)
+    if service is not None and not _bool(service.get('disabled')):
+        return service
     return None
 
 
@@ -1011,12 +1068,7 @@ class _Baseline(object):
         d = self.d
         if not d.ok('services'):
             return [_unknown(self.check, 'services', 'Services', d, 'services')]
-        services = {}
-        for service in d.items('services'):
-            # Dynamic entries (btest, discover, dhcpclient) mirror other features.
-            if not _bool(service.get('dynamic')):
-                services.setdefault(_text(service.get('name')), service)
-        services.pop('', None)
+        services = _service_entries(d)
         order = dict((name, index) for index, name in enumerate(_SERVICE_NAMES))
         names = sorted(services, key=lambda name: (order.get(name, len(order)), name))
         return [self.service(name, services[name]) for name in names]
@@ -1135,7 +1187,7 @@ class _Baseline(object):
         if not rules:
             return self.finding('firewall_input', title, 'WARNING', 'The input chain has no rules, so every enabled service is reachable')
         management_ports = set()
-        for service in d.items('services'):
+        for service in _service_entries(d).values():
             if not _bool(service.get('disabled')) and _text(service.get('port')).isdigit():
                 management_ports.add(int(_text(service.get('port'))))
         default_drop = False
